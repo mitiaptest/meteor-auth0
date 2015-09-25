@@ -32,10 +32,26 @@ Auth0.requestCredential = function (options, credentialRequestCompleteCallback) 
   }
 
   options.popupOptions = options.popupOptions || {};
-  var popupOptions = { 
-    width:  options.popupOptions.width || 320, 
+  var popupOptions = {
+    width:  options.popupOptions.width || 320,
     height: options.popupOptions.height || 450
   };
+  if (options.loginStyle === 'redirect') {
+    var redirectOptions = {};
+    redirectOptions['loginService'] = 'auth0';
+    redirectOptions['credentialToken'] = options.state;
+    redirectOptions['loginUrl'] = loginUrl;
+    redirectOptions['credentialRequestCompleteCallback'] = credentialRequestCompleteCallback;
+    redirectOptions['loginStyle'] = 'redirect';
+    OAuth.launchLogin(redirectOptions);
+  } else {
+    Oauth.initiateLogin(options.state, loginUrl, credentialRequestCompleteCallback, popupOptions);
+  }
+};
 
-  Oauth.initiateLogin(options.state, loginUrl, credentialRequestCompleteCallback, popupOptions);
+Auth0.checkUserLogin = function (callback) {
+  var oAuthData = OAuth.getDataAfterRedirect();
+  if (oAuthData !== null) {
+    Accounts.oauth.tryLoginAfterPopupClosed(oAuthData.credentialToken);
+  }
 };
